@@ -144,7 +144,16 @@ Google penalizes thin/doorway directories — the #1 risk here.
     `ClaudeBot`, `CCBot`, `Bytespider`, and `Applebot-Extended` (a training opt-out token; plain `Applebot` still
     crawls for Siri/Spotlight search). The
     content is a reformatted public CMS dataset, so being in training data earns nothing. AI *search* bots
-    (OAI-SearchBot, ChatGPT-User, PerplexityBot, Claude-SearchBot) stay allowed because they cite with links.
+    (OAI-SearchBot, ChatGPT-User, PerplexityBot, Claude-SearchBot) stay allowed in the hope they cite with links,
+    **but that hasn't paid off yet.** Over 2026-10-12 04:00 → 10-13 20:00 (~40h of traefik log), Applebot made
+    1.37M fetches, Claude-SearchBot 655k, bingbot 100k and OAI-SearchBot 4k. The only visible return was
+    **one person** arriving from ChatGPT (`utm_source=chatgpt.com`, 47 pages), with 0 referrals from
+    claude.ai. Siri/Claude may send visitors with no referrer, so the true count could be higher than this shows.
+    **Decision (2026-10-13): leave them free, since serving them costs nothing, and re-check in January 2027.**
+    Measure Matomo site 9's human visits from AI assistants. If they're still near zero, block these bots and
+    serve a 402 (x402 pay-per-crawl) instead of a 403. Nothing to gain until then: they won't pay, so a 402 now
+    would only be a block. Parked with it: x402 on the scraper/training-bot blocks and on API calls over the
+    daily cap. It needs a Base USDC `payTo` wallet and a production facilitator (CDP or PayAI); `@x402/next` + `@x402/core`.
   - **Hard-blocked too**, because robots.txt is voluntary: every UA above (except the `Applebot-Extended` token)
     gets a traefik **403** on every path but `/robots.txt` — the `npiradar-blockbots` router in
     `~/projects/npiradar/docker-compose.yml`. Keep its regex and this file's list in step. Verify with
