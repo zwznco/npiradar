@@ -77,8 +77,9 @@ export async function GET() {
       `\`{results, notFound, invalid}\`.`,
     `- Provider search: \`GET ${SITE_URL}/api/search?name=&specialty=&state=&city=&limit=&page=\` ` +
       `(at least one of name/specialty/state; city requires state; limit ≤ 50; page is 0-based).`,
-    `- Rate limit: 600 tokens/min per IP shared across endpoints (lookup 1, bulk 1 per NPI, search 10); ` +
-      `\`X-RateLimit-*\` headers on every response, 429 + \`Retry-After\` past it. Full docs: ${SITE_URL}/npi-api`,
+    `- Rate limit: 100 tokens/min per IP shared across endpoints (lookup 1, bulk 1 per NPI, search 10), plus ` +
+      `2,000 tokens/day per /24 and a daily ceiling on keyless use (reset 00:00 UTC); \`X-RateLimit-*\` headers ` +
+      `on every response, 429 + \`Retry-After\` past it. Full docs: ${SITE_URL}/npi-api`,
   ];
 
   if (specialties.length) {

@@ -51,11 +51,13 @@ export function BulkLookup() {
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [limitMsg, setLimitMsg] = useState("");
 
   async function run() {
     const npis = parseNpis(input);
     setSubmitted(true);
     setRows([]);
+    setLimitMsg("");
     if (npis.length === 0) return;
     setBusy(true);
     try {
@@ -65,8 +67,12 @@ export function BulkLookup() {
         body: JSON.stringify({ npis }),
       });
       if (r.status === 429) {
-        // Shared rate limit hit — surface it rather than silently showing errors.
-        setRows(npis.map((npi) => ({ npi, status: "error" })));
+        // Shared rate limit hit — say so and when to retry, rather than a table of bare errors.
+        const j = await r.json().catch(() => ({}));
+        const wait = Number(j.retryAfter) || Number(r.headers.get("Retry-After")) || 60;
+        setLimitMsg(j.error === "daily_limit"
+          ? "Daily lookup limit reached. It resets at 00:00 UTC."
+          : `Rate limit reached. Try again in ${wait} second${wait === 1 ? "" : "s"}.`);
         return;
       }
       if (!r.ok) {
@@ -136,6 +142,8 @@ export function BulkLookup() {
       {submitted && parsedCount === 0 && (
         <p className="sub">No 10-digit NPI numbers found in that input.</p>
       )}
+
+      {limitMsg && <p className="sub" role="status">{limitMsg}</p>}
 
       {rows.length > 0 && (
         <table className="bulk">

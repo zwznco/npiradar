@@ -19,13 +19,17 @@ export type Guard =
 // the route's own Response; on the deny path returns a ready-made 429 so callers just `return g.limited`.
 export async function guard(req: Request, cost: number): Promise<Guard> {
   const ip = clientIp(req);
-  const r: RateResult = await rateLimit(ip, cost);
+  // Set by traefik's jsgate plugin, which strips any client-sent copy: a browser that passed the gate.
+  const verified = req.headers.get("x-jsgate-verified") === "1";
+  const r: RateResult = await rateLimit(ip, cost, verified);
   recordUsage(req, ip, cost, !r.ok);
   const headers = { ...CORS, ...rateHeaders(r) };
   if (!r.ok) {
     return {
       limited: Response.json(
-        { error: "rate_limited", message: "Too many requests. Slow down and retry after the window resets.", retryAfter: r.reset },
+        r.scope === "daily"
+          ? { error: "daily_limit", message: "Daily API limit reached. It resets at 00:00 UTC.", retryAfter: r.reset }
+          : { error: "rate_limited", message: "Too many requests. Slow down and retry after the window resets.", retryAfter: r.reset },
         { status: 429, headers },
       ),
     };

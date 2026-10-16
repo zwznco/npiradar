@@ -92,12 +92,15 @@ export default async function NpiApiPage() {
       <section style={{ marginTop: 32 }}>
         <h2>Rate limits</h2>
         <p>
-          Each IP gets a shared budget of 600 tokens per minute across all endpoints. A single lookup costs 1 token,
-          a bulk request costs 1 per NPI, and a search costs 10. Every response carries{" "}
-          <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>, and <code>X-RateLimit-Reset</code>.
-          Past the limit you get <code>429</code> with a <code>Retry-After</code> header. That&apos;s about 36,000
-          bulk-resolved NPIs an hour. If you need the entire registry, the monthly NPPES Downloadable File is the
-          better tool (see <Link href="/nppes">NPPES explained</Link>).
+          Each IP gets a shared budget of 100 tokens per minute across all endpoints. A single lookup costs 1 token,
+          a bulk request costs 1 per NPI, and a search costs 10, so one full 100-NPI bulk request a minute. There is
+          also a daily budget of 2,000 tokens per network (/24) and an overall daily ceiling on keyless use, both
+          resetting at 00:00 UTC. Every response carries{" "}
+          <code>X-RateLimit-Limit</code>, <code>X-RateLimit-Remaining</code>, <code>X-RateLimit-Reset</code>, and{" "}
+          <code>X-RateLimit-Daily-Remaining</code>. Past a limit you get <code>429</code> with a{" "}
+          <code>Retry-After</code> header (<code>error: &quot;daily_limit&quot;</code> for the daily one). If you need
+          the entire registry, the monthly NPPES Downloadable File is the better tool (see{" "}
+          <Link href="/nppes">NPPES explained</Link>).
         </p>
       </section>
 

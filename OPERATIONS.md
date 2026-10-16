@@ -70,8 +70,22 @@ Tunable via env (defaults in `lib/ratelimit.ts`):
 
 | Env | Default | Meaning |
 |---|---|---|
-| `API_RATE_LIMIT` | `600` | tokens per window, per IP |
+| `API_RATE_LIMIT` | `100` | tokens per window, per IP |
 | `API_RATE_WINDOW` | `60` | window length, seconds |
+| `API_DAILY_PREFIX` | `2000` | tokens per UTC day, per /24 (IPv6 /48), anonymous |
+| `API_DAILY_GLOBAL` | `20000` | tokens per UTC day, all anonymous callers together |
+| `API_DAILY_PREFIX_VERIFIED` | `10000` | same, for requests traefik's jsgate vouched for |
+| `API_DAILY_GLOBAL_VERIFIED` | `100000` | same, for requests traefik's jsgate vouched for |
+
+**Why daily caps (2026-10-11):** a residential-proxy scraper used ~6,100 throwaway IPs (1,117 /24s),
+so a per-IP minute limit never fires; the global daily ceiling is what bounds it. "Verified" =
+`X-Jsgate-Verified: 1`, which traefik's jsgate plugin sets on `/api/` requests carrying a valid gate
+cookie (only a browser that passed the gate, e.g. /tools/bulk-lookup) and strips from every client
+request. `Origin`/`Referer` can't be the signal: both are spoofable. The separate verified budget
+means anonymous scraping can't use up the day for the site's own bulk tool. Real usage when set:
+48 requests / 550 units over 10 days. Redis keys: `rl:api:day:<tier>:<prefix>:<date>` and
+`rl:api:day:<tier>:all:<date>`. Check today's global use:
+`docker exec redis redis-cli get rl:api:day:anon:all:$(date -u +%F)`.
 
 Client IP is the first entry of `X-Forwarded-For` (set by Traefik). To make the limiter **fail
 closed** instead (starve abuse during a Redis outage, at the cost of availability), change the
@@ -124,6 +138,5 @@ Traefik's coarse edge limit).
 (1 / N / 10); guardrails 400 without charging; 429 fires exactly at budget exhaustion with
 `Retry-After`; Redis holds the `rl:api:<ip>` buckets. `tsc --noEmit` clean.
 
-**Not done (follow-ups):** no API key / freemium tiering yet (single per-IP budget for all callers);
-search `city` filter requires `state`; the bulk `MAX` (100) and rate budget (600/min) are untuned
-starting points.
+**Not done (follow-ups):** no API key / freemium tiering yet (keyless; per-IP minute + per-/24 and global daily budgets);
+search `city` filter requires `state`; the bulk `MAX` (100) is an untuned starting point.

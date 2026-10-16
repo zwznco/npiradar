@@ -20,6 +20,26 @@ the diff logged `NULL → 'NULL'` as a license change: 3,044,913 of the 3,193,46
   now 167,051 changes, 18,503 of them license. Pre-repair copies: the 2026-10-16T18:06 backup (local
   and R2).
 
+### Changed — API limit 600 → 100 tokens/min per IP, plus daily caps (2026-10-11)
+
+**Why:** a JS-executing residential-proxy scraper (from 2026-10-10; ~126k pages/day over ~6,100
+throwaway IPs in 1,117 /24s) makes per-IP minute limits meaningless. It hasn't touched the API yet,
+but `/api/` skips jsgate and the bulk endpoint returns 100 NPIs per call. Real API use was 48 requests /
+550 units over 10 days.
+
+- `lib/ratelimit.ts`: one atomic Lua check across three budgets: 100 tokens/min per IP (was 600; one full
+  bulk call a minute), 2,000/day per /24 (IPv6 /48) and 20,000/day across all anonymous callers. Requests
+  traefik's jsgate vouches for (`X-Jsgate-Verified`, i.e. a browser holding a valid gate cookie) get
+  10,000 / 100,000, so anonymous scraping can't use up the day for `/tools/bulk-lookup`. Denied
+  requests charge nothing. New `X-RateLimit-Daily-Remaining` header; a daily denial is
+  `429 {error: "daily_limit"}` with `Retry-After` until 00:00 UTC.
+- `/tools/bulk-lookup`: a 429 now says to wait N seconds (or that the daily limit is reached) instead of
+  marking every row "Error". With 100/min, a second 100-NPI run within a minute hits it.
+- Docs in step: `/npi-api`, `llms.txt`, `OPERATIONS.md` (new env vars). Removed the stale "Traefik
+  100/min/IP" comment; npiradar's edge limit is 600/min, burst 200.
+- Edge (not in this repo): jsgate `hardUAs` gives that scraper's exact UA an 18-bit, /24-bound
+  challenge. See `~/infrastructure/README.md` §CrowdSec, jsgate.
+
 ### Fixed — /open-payments took ~7 s on the first request after every restart (2026-10-07)
 
 `lib/insights.ts` cached the national Open Payments / OIG stats for a day per process, so the first

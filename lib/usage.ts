@@ -36,7 +36,8 @@ function endpointOf(req: Request): string {
   return path;
 }
 
-function maskIp(ip: string): string {
+// IPv4 /24 or IPv6 /48, as "a.b.c.0" / "x:y:z::". Also the rate limiter's daily-cap bucket.
+export function maskIp(ip: string): string {
   const v4 = ip.replace(/^::ffff:/i, "").match(/^(\d+\.\d+\.\d+)\.\d+$/);
   if (v4) return `${v4[1]}.0`;
   if (ip.includes(":")) {
