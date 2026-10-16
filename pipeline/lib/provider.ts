@@ -21,6 +21,14 @@ export function clean(v: string | undefined): string | null {
   return t === "" || t === "<UNAVAIL>" ? null : t;
 }
 
+/** A 2-letter state/territory code, else null. The October 2026 V2 file filled the license-state
+ *  column with the literal text "NULL" for ~3.06M providers with no license, which clean() kept and
+ *  the month-over-month diff then logged as 3M license changes. */
+export function stateCode(v: string | undefined): string | null {
+  const t = clean(v)?.toUpperCase() ?? null;
+  return t && /^[A-Z]{2}$/.test(t) ? t : null;
+}
+
 /** NPPES dates are MM/DD/YYYY → ISO YYYY-MM-DD (null if absent/malformed). */
 export function toIsoDate(v: string | undefined): string | null {
   const t = clean(v);
@@ -147,7 +155,7 @@ export function mapRow(row: string[], idx: ColIndex): { provider: Provider; mail
     deactivation_date: toIsoDate(row[idx.deactDate]),
     is_sole_proprietor: sole === null ? null : sole === "Y",
     license_number: slot >= 0 ? clean(row[idx.license[slot]]) : null,
-    license_state: slot >= 0 ? clean(row[idx.licenseState[slot]]) : null,
+    license_state: slot >= 0 ? stateCode(row[idx.licenseState[slot]]) : null,
   };
   return { provider, mailingState: clean(row[idx.mailState]), noSwitch: anyCode && !hadSwitch };
 }

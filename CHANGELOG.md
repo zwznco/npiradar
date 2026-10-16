@@ -5,6 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed — October 2026 NPPES file wrote the text "NULL" as license state (2026-10-16)
+
+**Why:** `live.providers.license_state` held the literal string `'NULL'` for 3,057,162 providers after
+the October V2 load (September: 0; no other column affected). `clean()` keeps any non-empty text, so
+the diff logged `NULL → 'NULL'` as a license change: 3,044,913 of the 3,193,461 rows for release
+2026-10-12 were this. Nothing user-facing: the NPI page shows the state only next to a license number.
+
+- `pipeline/lib/provider.ts`: `license_state` goes through `stateCode()`, which keeps only a 2-letter
+  code (the only non-matching value in the live data was `'NULL'`). `npiradar-refresh` rebuilt.
+- Data repaired in one guarded transaction: `license_state = NULL` for the 3,057,162 rows; in
+  `provider_changes` for 2026-10-12, a trailing `" NULL"` stripped from license values, 336 real changes
+  kept (stripped), and 3,026,410 rows deleted where old and new then matched. Release 2026-10-12 is
+  now 167,051 changes, 18,503 of them license. Pre-repair copies: the 2026-10-16T18:06 backup (local
+  and R2).
+
 ### Fixed — /open-payments took ~7 s on the first request after every restart (2026-10-07)
 
 `lib/insights.ts` cached the national Open Payments / OIG stats for a day per process, so the first
