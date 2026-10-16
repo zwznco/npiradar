@@ -4,11 +4,11 @@ import Script from "next/script";
 import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-// Matomo site 9 on the shared instance (matomo.redbudway.com). The init snippet deliberately
+// Matomo site 9 on the shared instance (matomo.zwznco.com). The init snippet deliberately
 // doesn't trackPageView: PageView does it on mount and on every client-side navigation, so the
 // first view isn't counted twice. Only JS-executing clients report, so the proxy scraper
 // (which never runs JS) doesn't pollute the numbers.
-const MATOMO_URL = "https://matomo.redbudway.com";
+const MATOMO_URL = "https://matomo.zwznco.com";
 const SITE_ID = "9";
 
 declare global {
