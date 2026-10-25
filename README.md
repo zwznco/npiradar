@@ -36,7 +36,7 @@ Full research trail (all rounds, every GO/NO-GO verdict): `~/project-research/re
 | Data store | **PostgreSQL** | 8M+ rows, faceted queries, trigram name search; COPY-load from NPPES CSV |
 | Search | Postgres trigram (MVP) → Meilisearch/Typesense (optional later) | Provider name autocomplete |
 | CDN / cache | **None** — pages render per request (~21 ms p50) | Traefik terminates TLS and serves every request directly; no Cloudflare |
-| Analytics | **Matomo site 9** (matomo.zwznco.com), JS-only | `app/_components/matomo.tsx`. JS-only on purpose: the scraper never runs JS, so Matomo counts real people. Audit: `docker exec -e IDSITE=9 -i th3-sh0p node - < ~/scripts/seo/matomo-audit.cjs` |
+| Analytics | **Matomo site 9** (matomo.zwznco.com), JS-only | `app/_components/matomo.tsx`. JS-only on purpose: the scraper never runs JS, so Matomo counts real people. Audit: `docker exec -e IDSITE=9 -i zwznco node - < ~/scripts/seo/matomo-audit.cjs` |
 | API usage | **`public.api_usage`** (Postgres), daily rollup | `lib/usage.ts`, written from the shared API guard. Matomo can't see API calls (no JS), so this is the only long-lived record. See **API usage** below. |
 | Deploy | Traefik + docker-compose | Per `~/projects/<name>` (compose+env) / `~/npiradar` (source+Dockerfile) convention |
 
